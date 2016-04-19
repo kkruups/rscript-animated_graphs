@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#http://www.kevjohnson.org/pdfs/Introduction_to_Ggplot.pdf\n# Be sure to install Image Magic (www.imagemagick.org)\n\nlibrary(raster)\nlibrary(maptools)\nlibrary(rgdal)\nlibrary(animation)\nlibrary(RColorBrewer)\nlibrary(ggplot2)\nlibrary(rgeos)\n#library(scales)\n\n#if file existsload data from \"animated_graphs/aninmated_graphsdata_jpn.rds\"\nload(file = \"animated_graphsdata_jpn.rds\")\n\n#Raster lib getData:  name = GADM  (dataset name)\n#name = GADM  (dataset name)\n#country = \"3letterIsoName\"\n#GADM is a spatial database of the location of the world's administrative areas\njpnb<-getData(\"GADM\", country=\"JPN\", level=1)\n\n#worldclim -- 'worldclim' is a database of global interpolated climate data\njpnp<-getData(\"worldclim\", var=\"prec\", res=0.5, lon=138, lat=36)\n\n#create matrix from jpnp (precipitation RasterStack dataset) and jpnb (geographic polygon dataframe)\n#extract the data values (precipitation data) from rasterstack (jpnp) at locations indicated by spatial data (jpnb)\njpnpe <- extract(jpnp, jpnb, fun = mean, na.rm = T)\n\n#convert matrix to dataframe\njpnpe<-data.frame(jpnpe)\n\n#copy precipitation data into jpnb@data\njpnb@data<-jpnpe\n\n#extract columnames from jpnb@data [x1,...,X12]\ndat<-colnames(jpnb@data)\n\n#create id data from row.names id: [1,...,47]\njpnb@data$id<-row.names(jpnb@data)\n\n#convert location (shapefile) data into easy to use dataframe data which ggplot2 can understand\n#region parameter indicates which data to select\njpnbf<-fortify(jpnb, region=\"id\")\n\n#merge converted shaped data (dataframe) with precipitation data based on id\njpnb.df<-merge(jpnbf,jpnb@data, by=\"id\")\n\n\n\n#rename column names from X1,...X12 to Months\ncolnames(jpnb.df)[8:19]<-c(\"January\",\"February\",\"March\",\"April\",\"May\",\"June\",\"July\",\"August\",\"September\",\"October\",\"November\",\"December\")\n\n#Create Color palette for map consisting of range of 9 colors\ncol<-brewer.pal(9,\"Spectral\")\nfor (i in 8:19){\n  #retrieve Month column name\n  var<-colnames(jpnb.df)[i]\n  \n  #specify dataset  ggplot(x=Long, y=Lat, by group)) \n  p<-ggplot(jpnb.df, aes(long,lat, group=group)) + \n     #fill color based on preciptation data fill polygon color by precipitation data \n      geom_polygon(aes_string(fill=var)) + coord_equal()\n  \n  #create polygon borders\n #Assume lat.group in original code wrong/typo, since jpnb has no group column\n # p<-p+geom_polygon(data=jpnb, aes(long,lat.group=group),fill=NA, colour=\"black\")\n  p <- p + geom_polygon(data = jpnb, aes(long,lat),fill = NA, colour=\"black\")\n  #Color Gradient legend \n  #p<-p+scale_fill_gradientn(\"Rainfall\",limits=c(0,330),guide=\"legend\", breaks=seq(0,330,30), colours=col)\n  \n  p <- p + scale_fill_gradientn(\"Rainfall\", limits=c(0,500), breaks = seq(0,500,50), colours=col) + guides(fill = guide_legend(reverse = TRUE))\n  p <- p + theme_bw() + ggtitle(var)\n  print(p)\n  ggsave(file=paste(\"rainr_\",i,\".png\", sep=\"\"))\n}\n\n#Create file name vector\nfiles = sprintf('rainr_%d.png', 8:19)\n#create aninmated gif from png files using image magick\nim.convert(files, output = 'r_rainfall.gif')\n\n#to list datasets in all packages\n# data(package = .packages(all.available = TRUE))\n# data(package = \"raster\")   //for specific package",
+    "created" : 1461044482560.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3994778571",
+    "id" : "7195F2DA",
+    "lastKnownWriteTime" : 1460962505,
+    "last_content_update" : 1460962505,
+    "path" : "C:/sandbox/r/tutorial/animated_graph/rain_fall_animated_map_reverse_legend.R",
+    "project_path" : "rain_fall_animated_map_reverse_legend.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
